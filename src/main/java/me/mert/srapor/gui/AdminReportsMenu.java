@@ -69,36 +69,36 @@ public final class AdminReportsMenu {
 
     private static ItemStack reportItem(SRapor plugin, ReportRecord r, ZoneId zoneId) {
         Material m = Material.PAPER;
-        String reasonTitle = r.getReason();
+        String reasonTitle = r.reason();
 
         try {
-            ReportReason rr = ReportReason.valueOf(r.getReason());
+            ReportReason rr = ReportReason.valueOf(r.reason());
             reasonTitle = rr.getTitle();
             m = rr.getMaterial();
         } catch (Exception ignored) {
         }
 
-        String targetName = r.getTargetName() != null ? r.getTargetName() : "Unknown";
-        String reporterName = nameFromUuid(plugin, r.getReporterUuid());
+        String targetName = r.targetName() != null ? r.targetName() : "Unknown";
+        String reporterName = nameFromUuid(plugin, r.reporterUuid());
 
-        String time = Instant.ofEpochMilli(r.getCreatedAt()).atZone(zoneId).format(F);
+        String time = Instant.ofEpochMilli(r.createdAt()).atZone(zoneId).format(F);
 
-        String statusRaw = r.getStatus() != null ? r.getStatus() : "OPEN";
+        String statusRaw = r.status() != null ? r.status() : "OPEN";
         String statusText = statusText(statusRaw);
 
-        String assignedName = r.getAssignedToName();
+        String assignedName = r.assignedToName();
         if (assignedName == null || assignedName.trim().isEmpty()) assignedName = "-";
 
-        String note = r.getStaffNote();
+        String note = r.staffNote();
         if (note == null || note.trim().isEmpty()) note = "-";
 
         String resolvedTime = "-";
-        if (r.getResolvedAt() != null) {
-            resolvedTime = Instant.ofEpochMilli(r.getResolvedAt()).atZone(zoneId).format(F);
+        if (r.resolvedAt() != null) {
+            resolvedTime = Instant.ofEpochMilli(r.resolvedAt()).atZone(zoneId).format(F);
         }
 
         List<String> lore = new ArrayList<>();
-        lore.add(plugin.color("&7ID: &f#" + r.getId()));
+        lore.add(plugin.color("&7ID: &f#" + r.id()));
         lore.add(plugin.color("&7Hedef: &f" + targetName));
         lore.add(plugin.color("&7Raporlayan: &f" + reporterName));
         lore.add(plugin.color("&7Sebep: &f" + reasonTitle));

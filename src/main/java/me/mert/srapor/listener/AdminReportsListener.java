@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -31,6 +32,12 @@ public final class AdminReportsListener implements Listener {
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        pendingNote.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    @SuppressWarnings("deprecation")
     public void onChat(AsyncPlayerChatEvent e) {
         Player p = e.getPlayer();
         Long reportId = pendingNote.get(p.getUniqueId());
@@ -39,7 +46,6 @@ public final class AdminReportsListener implements Listener {
         e.setCancelled(true);
 
         String msg = e.getMessage();
-        if (msg == null) msg = "";
         String trimmed = msg.trim();
 
         if (trimmed.equalsIgnoreCase("iptal")) {
@@ -50,25 +56,27 @@ public final class AdminReportsListener implements Listener {
 
         pendingNote.remove(p.getUniqueId());
 
-        String finalNote = trimmed;
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.getStorage().setStaffNote(reportId, finalNote);
+            boolean success = plugin.getStorage().setStaffNote(reportId, trimmed);
             ReportRecord fresh = plugin.getStorage().getReportById(reportId);
             Bukkit.getScheduler().runTask(plugin, () -> {
-                p.sendMessage(plugin.msg("note-saved"));
-                if (fresh != null) p.openInventory(AdminReportDetailMenu.create(plugin, fresh));
+                if (success) {
+                    p.sendMessage(plugin.msg("note-saved"));
+                    if (fresh != null) p.openInventory(AdminReportDetailMenu.create(plugin, fresh));
+                } else {
+                    p.sendMessage(plugin.color("&cBir hata oluştu, not kaydedilemedi!"));
+                }
             });
         });
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player)) return;
+        if (!(e.getWhoClicked() instanceof Player p)) return;
 
-        Player p = (Player) e.getWhoClicked();
         Inventory inv = e.getInventory();
 
-        if (inv.getHolder() instanceof AdminReportsHolder) {
+        if (inv.getHolder() instanceof AdminReportsHolder h) {
             e.setCancelled(true);
 
             if (!p.hasPermission("rapor.admin")) return;
@@ -76,7 +84,6 @@ public final class AdminReportsListener implements Listener {
             ItemStack it = e.getCurrentItem();
             if (it == null || it.getType() == Material.AIR) return;
 
-            AdminReportsHolder h = (AdminReportsHolder) inv.getHolder();
             int slot = e.getRawSlot();
 
             if (slot == 49) {
@@ -111,7 +118,7 @@ public final class AdminReportsListener implements Listener {
             return;
         }
 
-        if (inv.getHolder() instanceof AdminReportDetailHolder) {
+        if (inv.getHolder() instanceof AdminReportDetailHolder h) {
             e.setCancelled(true);
 
             if (!p.hasPermission("rapor.admin")) return;
@@ -119,7 +126,6 @@ public final class AdminReportsListener implements Listener {
             ItemStack it = e.getCurrentItem();
             if (it == null || it.getType() == Material.AIR) return;
 
-            AdminReportDetailHolder h = (AdminReportDetailHolder) inv.getHolder();
             ReportRecord r = h.getReport();
             int slot = e.getRawSlot();
 
@@ -135,7 +141,7 @@ public final class AdminReportsListener implements Listener {
 
             if (slot == 11) {
                 try {
-                    UUID target = UUID.fromString(r.getTargetUuid());
+                    UUID target = UUID.fromString(r.targetUuid());
                     Player t = Bukkit.getPlayer(target);
                     if (t != null) p.teleport(t.getLocation());
                 } catch (Exception ignored) {
@@ -147,7 +153,7 @@ public final class AdminReportsListener implements Listener {
                 int page = h.getPage();
                 String filter = h.getFilter();
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                    plugin.getStorage().deleteReportById(r.getId());
+                    plugin.getStorage().deleteReportById(r.id());
                     Bukkit.getScheduler().runTask(plugin, () -> new RaporlarCommand(plugin).openPage(p, page, filter));
                 });
                 return;
@@ -156,12 +162,17 @@ public final class AdminReportsListener implements Listener {
             if (slot == 10) {
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                     boolean ok = plugin.getStorage().claimReport(
-                            r.getId(),
+                            r.id(),
                             p.getUniqueId().toString(),
                             p.getName(),
                             System.currentTimeMillis()
                     );
-                    ReportRecord fresh = plugin.getStorage().getReportById(r.getId());
+
+                    if (ok) {
+                        plugin.getNotifyService().sendReportClaimedEmbed(p.getName(), r.id());
+                    }
+
+                    ReportRecord fresh = plugin.getStorage().getReportById(r.id());
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         p.sendMessage(ok ? plugin.msg("report-claim-success") : plugin.msg("report-claim-fail"));
                         if (fresh != null) p.openInventory(AdminReportDetailMenu.create(plugin, fresh, h.getPage(), h.getFilter()));
@@ -172,8 +183,13 @@ public final class AdminReportsListener implements Listener {
 
             if (slot == 16) {
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                    boolean ok = plugin.getStorage().resolveReport(r.getId(), System.currentTimeMillis());
-                    ReportRecord fresh = plugin.getStorage().getReportById(r.getId());
+                    boolean ok = plugin.getStorage().resolveReport(r.id(), System.currentTimeMillis());
+
+                        if (ok) {
+                        plugin.getNotifyService().sendReportResolvedEmbed(p.getName(), r.id());
+                    }
+
+                    ReportRecord fresh = plugin.getStorage().getReportById(r.id());
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         p.sendMessage(ok ? plugin.msg("report-resolve-success") : plugin.msg("report-resolve-fail"));
                         if (fresh != null) p.openInventory(AdminReportDetailMenu.create(plugin, fresh, h.getPage(), h.getFilter()));
@@ -183,7 +199,7 @@ public final class AdminReportsListener implements Listener {
             }
 
             if (slot == 12) {
-                pendingNote.put(p.getUniqueId(), r.getId());
+                pendingNote.put(p.getUniqueId(), r.id());
                 p.closeInventory();
                 p.sendMessage(plugin.msg("note-prompt"));
             }

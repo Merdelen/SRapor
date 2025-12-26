@@ -25,37 +25,37 @@ public final class AdminReportDetailMenu {
     }
 
     public static Inventory create(SRapor plugin, ReportRecord r, int page, String filter) {
-        String title = plugin.color("&8Rapor Detay &7(#" + r.getId() + ")");
+        String title = plugin.color("&8Rapor Detay &7(#" + r.id() + ")");
         Inventory inv = Bukkit.createInventory(new AdminReportDetailHolder(r, page, filter), 27, title);
 
         ItemStack filler = item(plugin, "GRAY_STAINED_GLASS_PANE", " ");
         for (int i = 0; i < 27; i++) inv.setItem(i, filler);
 
         Material m = Material.PAPER;
-        String reasonTitle = r.getReason();
+        String reasonTitle = r.reason();
         try {
-            ReportReason rr = ReportReason.valueOf(r.getReason());
+            ReportReason rr = ReportReason.valueOf(r.reason());
             reasonTitle = rr.getTitle();
             m = rr.getMaterial();
         } catch (Exception ignored) {
         }
 
-        String targetName = r.getTargetName() != null ? r.getTargetName() : "Unknown";
-        String reporterName = nameFromUuid(plugin, r.getReporterUuid());
-        String time = Instant.ofEpochMilli(r.getCreatedAt()).atZone(plugin.getZoneId()).format(F);
+        String targetName = r.targetName() != null ? r.targetName() : "Unknown";
+        String reporterName = nameFromUuid(plugin, r.reporterUuid());
+        String time = Instant.ofEpochMilli(r.createdAt()).atZone(plugin.getZoneId()).format(F);
 
-        String statusRaw = r.getStatus() != null ? r.getStatus() : "OPEN";
+        String statusRaw = r.status() != null ? r.status() : "OPEN";
         String statusText = statusText(statusRaw);
 
-        String assignedName = r.getAssignedToName();
+        String assignedName = r.assignedToName();
         if (assignedName == null || assignedName.trim().isEmpty()) assignedName = "-";
 
-        String note = r.getStaffNote();
+        String note = r.staffNote();
         if (note == null || note.trim().isEmpty()) note = "-";
 
         String resolvedTime = "-";
-        if (r.getResolvedAt() != null) {
-            resolvedTime = Instant.ofEpochMilli(r.getResolvedAt()).atZone(plugin.getZoneId()).format(F);
+        if (r.resolvedAt() != null) {
+            resolvedTime = Instant.ofEpochMilli(r.resolvedAt()).atZone(plugin.getZoneId()).format(F);
         }
 
         List<String> lore = new ArrayList<>();
