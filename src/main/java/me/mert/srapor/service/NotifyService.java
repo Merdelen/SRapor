@@ -1,5 +1,7 @@
 package me.mert.srapor.service;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import me.mert.srapor.SRapor;
 import org.bukkit.entity.Player;
 
@@ -84,12 +86,12 @@ public final class NotifyService {
         if (!plugin.getConfig().getBoolean("webhook.enabled", false)) return;
 
         String url = plugin.getConfig().getString("webhook.url", "");
-        if (url == null || url.trim().isEmpty()) return;
+        if (url.trim().isEmpty()) return;
 
         String footer = plugin.getConfig().getString("webhook.embed.footer", "");
         boolean ts = plugin.getConfig().getBoolean("webhook.embed.show-timestamp", true);
 
-        String payload = buildEmbedPayload(title, color, footer, ts, fieldPrefix, values);
+        String payload = buildJsonPayload(title, color, footer, ts, fieldPrefix, values);
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             HttpURLConnection con = null;
@@ -100,6 +102,7 @@ public final class NotifyService {
                 con.setReadTimeout(plugin.getConfig().getInt("webhook.timeout-ms", 5000));
                 con.setDoOutput(true);
                 con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("User-Agent", "SRapor-Plugin");
 
                 byte[] out = payload.getBytes(StandardCharsets.UTF_8);
                 con.setFixedLengthStreamingMode(out.length);
@@ -116,36 +119,40 @@ public final class NotifyService {
         });
     }
 
-    private String buildEmbedPayload(String title, int color, String footer, boolean ts, String fieldPrefix, Map<String, String> values) {
-        StringBuilder fields = new StringBuilder();
-        for (Map.Entry<String, String> e : values.entrySet()) {
-            String name = plugin.getConfig().getString(fieldPrefix + e.getKey(), e.getKey());
-            fields.append("{\"name\":\"")
-                    .append(json(name))
-                    .append("\",\"value\":\"")
-                    .append(json(e.getValue()))
-                    .append("\",\"inline\":false},");
-        }
-        if (fields.length() > 0) fields.setLength(fields.length() - 1);
+    private String buildJsonPayload(String title, int color, String footer, boolean ts, String fieldPrefix, Map<String, String> values) {
+        JsonObject root = new JsonObject();
+        JsonArray embeds = new JsonArray();
+        JsonObject embed = new JsonObject();
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"embeds\":[{");
-        sb.append("\"title\":\"").append(json(title)).append("\",");
-        sb.append("\"color\":").append(color).append(",");
-        sb.append("\"fields\":[").append(fields).append("]");
+        embed.addProperty("title", title);
+        embed.addProperty("color", color);
 
         if (footer != null && !footer.isEmpty()) {
-            sb.append(",\"footer\":{\"text\":\"").append(json(footer)).append("\"}");
+            JsonObject footerObj = new JsonObject();
+            footerObj.addProperty("text", footer);
+            embed.add("footer", footerObj);
         }
-        if (ts) {
-            sb.append(",\"timestamp\":\"").append(Instant.now().toString()).append("\"");
-        }
-        sb.append("}]}");
-        return sb.toString();
-    }
 
-    private String json(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+        if (ts) {
+            embed.addProperty("timestamp", Instant.now().toString());
+        }
+
+        JsonArray fieldsArray = new JsonArray();
+        for (Map.Entry<String, String> e : values.entrySet()) {
+            String fieldName = plugin.getConfig().getString(fieldPrefix + e.getKey(), e.getKey());
+
+            JsonObject fieldObj = new JsonObject();
+            fieldObj.addProperty("name", fieldName);
+            fieldObj.addProperty("value", e.getValue());
+            fieldObj.addProperty("inline", false);
+
+            fieldsArray.add(fieldObj);
+        }
+        embed.add("fields", fieldsArray);
+
+        embeds.add(embed);
+        root.add("embeds", embeds);
+
+        return root.toString();
     }
 }
