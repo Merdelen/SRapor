@@ -1,0 +1,21 @@
+name: SRapor
+version: 1.0.0
+main: me.mert.srapor.SRapor
+api-version: "1.19"
+Author: Mert Seçkin
+
+commands:
+  rapor:
+    usage: /rapor <oyuncu>
+  srapor:
+    usage: /srapor reload
+  raporlar:
+    usage: /raporlar
+
+permissions:
+  rapor.use:
+    default: true
+  rapor.admin:
+    default: op
+  rapor.reload:
+    default: op

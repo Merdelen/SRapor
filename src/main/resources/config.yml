@@ -1,0 +1,151 @@
+timezone: "Europe/Istanbul"
+
+messages:
+  no-permission: "&cYetkin yok."
+  only-player: "&cBu komut sadece oyuncular icindir."
+  usage: "&eKullanim: &f/rapor <oyuncu>"
+  target-not-found: "&cOyuncu bulunamadi veya cevrimdisi."
+  self-report: "&cKendini raporlayamazsin."
+  report-sent: "&aRapor gonderildi: &f{target} &7({reason})"
+  already-reported: "&cBugun bu oyuncuyu bu sebepten zaten raporladin."
+
+  admin-notify: "&8[&dSRapor&8] &e{reporter} &7-> &c{target} &7| &b{reason}"
+
+  report-claim-success: "&aRapor ustlenildi."
+  report-claim-fail: "&cBu rapor artik ustlenilemez."
+  report-resolve-success: "&aRapor cozuldu olarak isaretlendi."
+  report-resolve-fail: "&cBu rapor zaten cozulmus."
+
+  note-prompt: "&eNot yaz (iptal yazarsan iptal olur):"
+  note-saved: "&aNot kaydedildi."
+  note-cancelled: "&cIslem iptal edildi."
+
+menu:
+  title: "&8Rapor: &f{target}"
+  size: 27
+
+  header:
+    slot: 4
+    material: "PLAYER_HEAD"
+    name: "&d✦ &fRapor Menüsü"
+    lore:
+      - "&7Hedef: &f{target}"
+      - "&8Bir sebep seçerek raporu gönder."
+      - "&8Kötü niyetli raporlar cezalandırılabilir."
+
+  close:
+    slot: 22
+    material: "BARRIER"
+    name: "&c✖ Kapat"
+
+  filler:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+reasons:
+  SWEAR:
+    enabled: true
+    slot: 10
+    material: "PAPER"
+    name: "&4☠ &fKüfür"
+    lore:
+      - "&7Sohbet davranışları"
+      - "&8Hakaret, ırkçılık, taciz"
+      - "&a✔ Tıkla ve raporu gönder"
+
+  AD:
+    enabled: true
+    slot: 11
+    material: "OAK_SIGN"
+    name: "&6📢 &fReklam"
+    lore:
+      - "&7Sunucu / Discord reklamı"
+      - "&8Link, IP, davet"
+      - "&a✔ Tıkla ve raporu gönder"
+
+  CHEAT:
+    enabled: true
+    slot: 12
+    material: "DIAMOND_SWORD"
+    name: "&c⚔ &fHile"
+    lore:
+      - "&7Haksız avantaj"
+      - "&8Killaura, xray, macro"
+      - "&a✔ Tıkla ve raporu gönder"
+
+  SPAM:
+    enabled: true
+    slot: 13
+    material: "FIREWORK_ROCKET"
+    name: "&b✉ &fSpam"
+    lore:
+      - "&7Flood / tekrar"
+      - "&8Ardışık mesaj, caps"
+      - "&a✔ Tıkla ve raporu gönder"
+
+  OTHER:
+    enabled: true
+    slot: 14
+    material: "ANVIL"
+    name: "&7❖ &fDiğer"
+    lore:
+      - "&7Başka bir sebep"
+      - "&8Kısa açıklama sonra eklenecek"
+      - "&a✔ Tıkla ve raporu gönder"
+
+admin-menu:
+  reports:
+    filter:
+      button:
+        material: "HOPPER"
+        name: "&b⛭ &fFiltre: {filter}"
+        lore:
+          - "&7Tıkla ve filtre değiştir"
+          - "&7Sıra: &bHepsi &7→ &aAçık &7→ &eÜstlenildi &7→ &aÇözüldü"
+      labels:
+        ALL: "&bHepsi"
+        OPEN: "&aAçık"
+        CLAIMED: "&eÜstlenildi"
+        RESOLVED: "&aÇözüldü"
+
+  detail:
+    buttons:
+      claim:
+        enabled:
+          material: "LIME_DYE"
+          name: "&a✔ &fÜstlen"
+        disabled:
+          material: "GRAY_DYE"
+          name: "&7✔ &8Üstlenilemez"
+
+      note:
+        material: "BOOK"
+        name: "&e✎ &fNot"
+
+      resolve:
+        enabled:
+          material: "EMERALD_BLOCK"
+          name: "&a✓ &fÇözüldü"
+        disabled:
+          material: "GRAY_CONCRETE"
+          name: "&7✓ &8Zaten Çözüldü"
+
+webhook:
+  enabled: false
+  url: ""
+  timeout-ms: 5000
+
+  embed:
+    footer: "SRapor • Moderasyon Sistemi"
+    show-timestamp: true
+
+    report-created:
+      enabled: true
+      color: 15158332
+      title: "📝 Yeni Rapor"
+      fields:
+        reporter: "Raporlayan"
+        target: "Hedef"
+        reason: "Sebep"
+        id: "Rapor ID"
+        time: "Tarih"
